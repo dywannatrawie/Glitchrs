@@ -3,7 +3,13 @@ import random
 import math
 import os
 import subprocess
+
 pygame.init()
+
+portal2 = pygame.Rect(300, 200, 50, 80)  # nowy portal do Tetrisa
+portal2_color = (255, 100, 0)            # inny kolor (pomarańczowy)
+tetris_process = None
+in_tetris = False
 
 
 # Load background image
@@ -134,6 +140,13 @@ def spawn_arena():
 
 running = True
 while running:
+    
+    if in_tetris:
+        if tetris_process and tetris_process.poll() is not None:
+            in_tetris = False
+        else:
+            continue  # pomiń całą pętlę jeśli Tetris trwa
+        
     clock.tick(60)
     glitch_timer += 1
     mouse_anim_timer += 1
@@ -155,6 +168,14 @@ while running:
             if not any(next_pos.colliderect(o) for o in obstacles):
                 ludzik = clamp_rect(next_pos, WIDTH, HEIGHT)
 
+    if mini_game_unlocked and ludzik.colliderect(portal2) and not in_tetris:
+        try:
+            tetris_process = subprocess.Popen(["python", "tetris.py"])
+            pygame.display.iconify()
+            in_tetris = True
+        except Exception as e:
+            print("Błąd przy uruchamianiu Tetris:", e)
+            
     if not in_arena and ludzik.colliderect(portal):
         in_arena = True
         ludzik.x, ludzik.y = WIDTH // 2, HEIGHT // 2
@@ -281,6 +302,9 @@ while running:
             screen.blit(font.render("Mini-gra odblokowana!", True, BLACK), (WIDTH//2 - 120, HEIGHT//2))
         else:
             screen.blit(font.render("Wejście do Areny", True, BLACK), (portal.x - 30, portal.y - 30))
+            
+    if mini_game_unlocked:
+        pygame.draw.rect(screen, portal2_color, portal2)
     else:
         offset_x, offset_y = glitch_frames[glitch_timer % len(glitch_frames)] if glitch_timer % 10 < 3 else (0, 0)
 
