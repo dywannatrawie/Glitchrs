@@ -5,7 +5,12 @@ import sys
 pygame.init()
 WIDTH, HEIGHT = 640, 480
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("TETRIS + Gracz")
+pygame.display.set_caption("Poziom 4 - Threthris")
+
+
+pygame.mixer.init()
+pygame.mixer.music.load("glitch_last.mp3")
+pygame.mixer.music.play(-1)  # -1 oznacza zapętlone odtwarzanie
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -51,7 +56,7 @@ class Player:
         self.rect.x += dx
         if self.collides_with_grid(grid):
             self.rect.x -= dx
-    
+
         # Ruch pionowy (jeśli kiedykolwiek potrzebny)
         self.rect.y += dy
         if self.collides_with_grid(grid):
@@ -62,7 +67,7 @@ class Player:
         self.velocity_y += self.gravity
         if self.velocity_y > 10:
             self.velocity_y = 10
-    
+
         dy = int(self.velocity_y)
         for step in range(abs(dy)):
             move_dir = 1 if dy > 0 else -1
@@ -74,7 +79,7 @@ class Player:
                 break
         else:
             self.on_ground = False
-    
+
         self.clamp_position()
 
 
@@ -173,7 +178,7 @@ def update(player):
 
     falling_blocks = new_falling_blocks
 
-    if random.randint(0, 60) == 0:
+    if random.randint(0, 20) == 0:
         falling_blocks.append(create_tetris_block())
 
 
@@ -206,22 +211,56 @@ def check_victory(player):
         sys.exit()
 
 def main():
+    global falling_blocks, grid
     player = Player(100, HEIGHT - 60)
+    state = "running"
+    font = pygame.font.SysFont("arial", 28)
 
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            if state in ("win", "game_over") and event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    # Restart gry
+                    player = Player(100, HEIGHT - 60)
+                    falling_blocks = []
+                    grid = [[0] * (WIDTH // BLOCK_SIZE) for _ in range(HEIGHT // BLOCK_SIZE)]
+                    state = "running"
 
-        player.handle_input(grid)
-        player.apply_gravity(grid)
+        if state == "running":
+            player.handle_input(grid)
+            player.apply_gravity(grid)
+            update(player)
 
-        update(player)  # aktualizacja klocków
-        check_victory(player)  # Sprawdzenie zwycięstwa
-        draw(player)
+            if player.rect.top <= VICTORY_Y + VICTORY_HEIGHT:
+                state = "win"
+
+            for block in falling_blocks:
+                future_rects = [pygame.Rect(block["x"] + x * BLOCK_SIZE, block["y"] + y * BLOCK_SIZE + block_speed, BLOCK_SIZE, BLOCK_SIZE)
+                                for x, y in block["shape"]]
+                for rect in future_rects:
+                    if rect.colliderect(player.rect):
+                        if rect.top < player.rect.bottom and rect.bottom <= player.rect.bottom:
+                            state = "game_over"
+
+        # Rysowanie
+        if state == "running":
+            draw(player)
+        elif state == "win":
+            WIN.fill(BLACK)
+            message = font.render("Ciąg dalszy nastąpi...", True, GOLD)
+            WIN.blit(message, (WIDTH // 2 - message.get_width() // 2, HEIGHT // 2 - 20))
+        elif state == "game_over":
+            WIN.fill(BLACK)
+            end_text = font.render("GAME OVER", True, RED)
+            restart_text = font.render("Naciśnij SPACJĘ, aby kontynuować", True, WHITE)
+            WIN.blit(end_text, (WIDTH // 2 - end_text.get_width() // 2, HEIGHT // 2 - 30))
+            WIN.blit(restart_text, (WIDTH // 2 - restart_text.get_width() // 2, HEIGHT // 2 + 10))
 
         pygame.display.update()
         clock.tick(FPS)
+
 
 main()
