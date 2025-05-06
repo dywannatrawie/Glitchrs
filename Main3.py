@@ -168,14 +168,6 @@ while running:
             if not any(next_pos.colliderect(o) for o in obstacles):
                 ludzik = clamp_rect(next_pos, WIDTH, HEIGHT)
 
-    if mini_game_unlocked and ludzik.colliderect(portal2) and not in_tetris:
-        try:
-            tetris_process = subprocess.Popen(["python", "tetris.py"])
-            pygame.display.iconify()
-            in_tetris = True
-        except Exception as e:
-            print("Błąd przy uruchamianiu Tetris:", e)
-            
     if not in_arena and ludzik.colliderect(portal):
         in_arena = True
         ludzik.x, ludzik.y = WIDTH // 2, HEIGHT // 2
@@ -303,8 +295,8 @@ while running:
         else:
             screen.blit(font.render("Wejście do Areny", True, BLACK), (portal.x - 30, portal.y - 30))
             
-    if mini_game_unlocked:
-        pygame.draw.rect(screen, portal2_color, portal2)
+        if mini_game_unlocked:
+            pygame.draw.rect(screen, portal2_color, portal2)
     else:
         offset_x, offset_y = glitch_frames[glitch_timer % len(glitch_frames)] if glitch_timer % 10 < 3 else (0, 0)
 
