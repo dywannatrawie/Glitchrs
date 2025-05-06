@@ -11,6 +11,7 @@ portal2_color = (255, 100, 0)            # inny kolor (pomarańczowy)
 tetris_process = None
 in_tetris = False
 
+WIDTH, HEIGHT = 800, 600
 
 # Load background image
 background_img = pygame.image.load(os.path.join("Graphics", "background.png"))
@@ -47,7 +48,6 @@ try:
 except:
     print("Nie można załadować pliku muzycznego")
 
-WIDTH, HEIGHT = 800, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Reverse Snake - Ludzik vs Wąż")
 
@@ -179,9 +179,12 @@ while running:
         bullet_ready = 0
 
     if in_arena:
+        offset_x, offset_y = glitch_frames[glitch_timer % len(glitch_frames)] if glitch_timer % 10 < 3 else (0, 0)
+    
         for i, veggie in enumerate(veggies):
             img = fruit_imgs[veggie_types[i] % len(fruit_imgs)]
             screen.blit(img, veggie.move(offset_x, offset_y))
+
             if ludzik.colliderect(veggie):
                 veggies.remove(veggie)
                 bullet_ready += 1
